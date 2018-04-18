@@ -128,12 +128,12 @@ def predict(X_img, knn_clf=None, model_path=None, distance_threshold=0.6):
         raise Exception("Must supply knn classifier either thourgh knn_clf or model_path")
 
     # Load a trained KNN model (if one was passed in)
-   
-  
+
+
     with open(model_path, 'rb') as f:
         knn_clf = pickle.load(f)
 
-   
+
     # Load image file and find face locations
     #X_img = face_recognition.load_image_file(X_img_path)
 
@@ -150,7 +150,7 @@ def predict(X_img, knn_clf=None, model_path=None, distance_threshold=0.6):
     # Use the KNN model to find the best matches for the test face
     closest_distances = knn_clf.kneighbors(faces_encodings, n_neighbors=1)
     are_matches = [closest_distances[0][i][0] <= distance_threshold for i in range(len(X_face_locations))]
-    
+
     # Predict classes and remove classifications that aren't within the threshold
     return [(pred, loc) if rec else ("unknown", loc) for pred, loc, rec in zip(knn_clf.predict(faces_encodings), X_face_locations, are_matches)]
 
@@ -202,7 +202,7 @@ if __name__ == "__main__":
         # Find all people in the image using a trained classifier model
         # Note: You can pass in either a classifier file name or a classifier model instance
         time_now = time.time()
-        predictions = predict(image, model_path="D:/School/Notes/408G/Final Project/face_detector/knn_examples/trained_knn_model.txt")
+        predictions = predict(image, model_path="C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/trained_knn_model.txt"
         time_end = time.time()
         print("It took " + str(time_end-time_now) + " seconds.")
         # Print results on the console
@@ -215,7 +215,7 @@ if __name__ == "__main__":
 
             cv2.imshow("detection",image)
             cv2.waitKey(1)
-            
+
         time.sleep(2)
 cv2.destroyAllWindows()
         # Display results overlaid on an image
