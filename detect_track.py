@@ -3,46 +3,69 @@
     Author: Guido Diepen <gdiepen@deloitte.nl>
 '''
 
-#Import the OpenCV and dlib libraries
 import cv2
 import dlib
-
-import face_rec
-import threading
 import time
+import pickle
+import threading
+import face_rec2
+import face_recognition
+from imutils import face_utils
+
+#Operation Variables
+score_min_to_track = -1
+score_max_to_ID = -0.5
+scale_down_factor = 1
+face_pool_size = 5
+update_tracker = 10
+tracking_strictness = 6
+
+
+class face_info:
+    def __init__(self):
+        self.identified = False
+        self.faceTracker = 0
+        self.name = "Who?"  
+        self.queuecount = 0
+        self.queuescoremax = -5
+        self.queuebestface = 0
+        self.ID = 0
+    def reset_queue(self):
+        self.queuebestface = 0
+        self.queuescoremax = -5
+        self.queuecount = 0
 
 #Initialize a face cascade using the frontal face haar cascade provided with
 #the OpenCV library
 #Make sure that you copy this file from the opencv project to the root of this
 #project folder
 
+previously_found_names = []
+previously_found_encodings = []
+
+classifier_model_path = "D:/School/Notes/408G/Final Project/face_detector/knn_examples/trained_knn_model.txt"
+landmark_predictor_path = "D:/School/Notes/408G/Final Project/face_detector/shape_predictor_5_face_landmarks.dat"
 faceCascade = cv2.CascadeClassifier('C:/Users/Scott/Anaconda3/Library/etc/haarcascades/haarcascade_frontalface_default.xml')
-
+detector = dlib.get_frontal_face_detector()
+predictor = dlib.shape_predictor(landmark_predictor_path)
 #The deisred output width and height
-OUTPUT_SIZE_WIDTH = 775
-OUTPUT_SIZE_HEIGHT = 600
-
-def doRecognizePerson(faceNames, fid):
-    time.sleep(.5)
-    faceNames[fid] = "Person " + str(fid)
-    #predictions = face_rec.predict(
-    #    tempface, model_path="D:/School/Notes/408G/Final Project/face_detector/knn_examples/trained_knn_model.txt")
-    #for name, pos in predictions:
-    #    faceNames[ fid ] = name
-
-
-
-    
+OUTPUT_SIZE_WIDTH = 900
+OUTPUT_SIZE_HEIGHT = 800
+   
 def detectAndTrackMultipleFaces():
-    #Open the first webcame device
-    capture = cv2.VideoCapture(0)
-    #vid_height = int(capture.get(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT))
-    #vid_width = int(capture.get(cv2.cv.CV_CAP_PROP_FRAME_WIDTH))
-    #print ("Height: " + str(vid_height) + ", Width: " + str(vid_width))
-    #Create two opencv named windows
-    #fps = capture.get(cv2.CAP_PROP_FPS)
-    fps = 30
+
+    with open(classifier_model_path, 'rb') as f:
+        knn_clf = pickle.load(f)
+    found_face_id = 0
+    Onscreen_Faces = []
+
+    capture = cv2.VideoCapture("D:/School/Notes/408G/Final Project/Week1/Clips/gatesjobs.mp4")
+    video_height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+    video_width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+    print ("This video is " + str(video_width) + 'x' + str(video_height))
+    fps = capture.get(cv2.CAP_PROP_FPS)
     spf = float(1/fps)
+
     cv2.namedWindow("base-image", cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow("result-image", cv2.WINDOW_AUTOSIZE)
 
@@ -58,39 +81,31 @@ def detectAndTrackMultipleFaces():
 
     #variables holding the current frame number and the current faceid
     frameCounter = 0
-    currentFaceID = 0
+ 
 
-    #Variables holding the correlation trackers and the name per faceid
-    faceTrackers = {}
-    faceNames = {}
     time_start_loop = time.time()
-    time_last = 0
+    time_last = time_start_loop
+    showit = False
     try:
         while True:
-            #Retrieve the latest image from the webcam
-            rc,fullSizeBaseImage = capture.read()
 
-            #Resize the image to 320x240
+            rc, fullSizeBaseImage = capture.read()
+
             if not rc:
                 break
-
-            baseImage = cv2.resize( fullSizeBaseImage, ( 320, 240))
             
-            #Check if a key was pressed and if it was Q, then break
-            #from the infinite loop
+            baseImage = cv2.resize(fullSizeBaseImage, (0,0), fx=1/scale_down_factor, fy=1/scale_down_factor)
+            #baseImage = cv2.resize(fullSizeBaseImage,(890,500))
+            gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
+ 
             pressedKey = cv2.waitKey(1)
-            if pressedKey == ord('Q'):
-                break
+            # if pressedKey == ord('q'):
+            #     break
+            # if pressedKey == ord('y'):
+            #     showit = not showit
 
 
-
-            #Result image is the image we will show the user, which is a
-            #combination of the original image from the webcam and the
-            #overlayed rectangle for the largest face
             resultImage = baseImage.copy()
-
-
-
 
             #STEPS:
             # * Update all trackers and remove the ones that are not 
@@ -101,164 +116,185 @@ def detectAndTrackMultipleFaces():
             #       + For each found face, check if centerpoint is within
             #         existing tracked box. If so, nothing to do
             #       + If centerpoint is NOT in existing tracked box, then
-            #         we add a new tracker with a new face-id
+            #         we add a new tracker with a new face-id   
 
 
             #Increase the framecounter
             frameCounter += 1 
 
-
-
             #Update all the trackers and remove the ones for which the update
             #indicated the quality was not good enough
             fidsToDelete = []
-            for fid in faceTrackers.keys():
-                #time_start = time.time()
-                trackingQuality = faceTrackers[ fid ].update( baseImage )
-                #time_end = time.time()
-                #print("Face Tracking took " + str(time_end-time_start))
-                #If the tracking quality is good enough, we must delete
+            for fid,Onscreen_Face in enumerate(Onscreen_Faces):
+
+                trackingQuality = Onscreen_Face.faceTracker.update( baseImage )
+
+                #If the tracking quality is not good enough, we must delete
                 #this tracker
-                if trackingQuality < 5:
+                if trackingQuality < tracking_strictness:
                     fidsToDelete.append( fid )
 
             for fid in fidsToDelete:
-                print("Removing fid " + str(fid) + " from list of trackers")
-                faceTrackers.pop( fid , None )
+                
+                if (len(Onscreen_Faces)-1 >= fid):
+                    print("Removing fid " + str(fid) + " from list of trackers")
+                    Onscreen_Faces.pop( fid )
+                else:
+                    print("Trying to delete index " + str(fid) + ', but length of Onscreen_Faces is only ' + str(len(Onscreen_Faces)) + '\n')
+                    for fid,Onscreen_Face in enumerate(Onscreen_Faces):
+                        print(str(fid) + ': ' + Onscreen_Face.name + '\n')
+                    time.sleep(10)
 
+            if (frameCounter % update_tracker) == 0:
 
+                rects, scores, idx = detector.run(gray, 0, 0)
+                #faces = faceCascade.detectMultiScale(gray, 1.3, 5)
+                # for (_x,_y,_w,_h) in faces:
+                #     x = int(_x)
+                #     y = int(_y)
+                #     w = int(_w)
+                #     h = int(_h)
+                for o, rect in enumerate(rects):
+                    #if True:
+                    if (scores[0] > score_min_to_track):
+                        (x, y, w, h) = face_utils.rect_to_bb(rect)
 
+                        x_bar = x + 0.5 * w
+                        y_bar = y + 0.5 * h
 
-            #Every 10 frames, we will have to determine which faces
-            #are present in the frame
-            if (frameCounter % 10) == 0:
-
-
-
-                #For the face detection, we need to make use of a gray
-                #colored image so we will convert the baseImage to a
-                #gray-based image
-                gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
-                #Now use the haar cascade detector to find all faces
-                #in the image
-                #time_start = time.time()
-                faces = faceCascade.detectMultiScale(gray, 1.3, 5)
-                #time_end = time.time()
-                #print("Face Detection took " + str(time_end-time_start))
-
-
-                #Loop over all faces and check if the area for this
-                #face is the largest so far
-                #We need to convert it to int here because of the
-                #requirement of the dlib tracker. If we omit the cast to
-                #int here, you will get cast errors since the detector
-                #returns numpy.int32 and the tracker requires an int
-                for (_x,_y,_w,_h) in faces:
-                    x = int(_x)
-                    y = int(_y)
-                    w = int(_w)
-                    h = int(_h)
-
-
-                    #calculate the centerpoint
-                    x_bar = x + 0.5 * w
-                    y_bar = y + 0.5 * h
-
-
-
-                    #Variable holding information which faceid we 
-                    #matched with
-                    matchedFid = None
+                        matchedFid = None
 
                     #Now loop over all the trackers and check if the 
                     #centerpoint of the face is within the box of a 
                     #tracker
                     
-                    for fid in faceTrackers.keys():
-                        tracked_position =  faceTrackers[fid].get_position()
+                        for fid,Onscreen_Face in enumerate(Onscreen_Faces):
+                            tracked_position =  Onscreen_Face.faceTracker.get_position()
 
-                        t_x = int(tracked_position.left())
-                        t_y = int(tracked_position.top())
-                        t_w = int(tracked_position.width())
-                        t_h = int(tracked_position.height())
-                        global tempface
-                        tempface = baseImage[y:y+h,x:x+w]
-                        #calculate the centerpoint
-                        t_x_bar = t_x + 0.5 * t_w
-                        t_y_bar = t_y + 0.5 * t_h
+                            t_x = int(tracked_position.left())
+                            t_y = int(tracked_position.top())
+                            t_w = int(tracked_position.width())
+                            t_h = int(tracked_position.height())
+                        
+                            t_x_bar = t_x + 0.5 * t_w
+                            t_y_bar = t_y + 0.5 * t_h
 
                         #check if the centerpoint of the face is within the 
                         #rectangleof a tracker region. Also, the centerpoint
-                        #of the tracker region must be within the region 
+                        #of     the tracker region must be within the region 
                         #detected as a face. If both of these conditions hold
                         #we have a match
-                        if ( ( t_x <= x_bar   <= (t_x + t_w)) and 
-                             ( t_y <= y_bar   <= (t_y + t_h)) and 
-                             ( x   <= t_x_bar <= (x   + w  )) and 
-                             ( y   <= t_y_bar <= (y   + h  ))):
-                            matchedFid = fid
+                            if ( ( t_x <= x_bar   <= (t_x + t_w)) and 
+                                ( t_y <= y_bar   <= (t_y + t_h)) and 
+                                ( x   <= t_x_bar <= (x   + w  )) and 
+                                ( y   <= t_y_bar <= (y   + h  ))):
+                                matchedFid = fid
 
 
                     #If no matched fid, then we have to create a new tracker
-                    if matchedFid is None:
+                        if matchedFid is None:
+                        
+                            #shape = predictor(gray,dlib.rectangle(int(x),int(y),int(x+w),int(y+h)))
+                            #shape = face_utils.shape_to_np(shape)
 
-                        print("Creating new tracker " + str(currentFaceID))
-
-                        #Create and store the tracker 
-                        tracker = dlib.correlation_tracker()
-                        tracker.start_track(baseImage,
-                                            dlib.rectangle( x-10,
-                                                            y-20,
-                                                            x+w+10,
-                                                            y+h+20))
-
-                        faceTrackers[ currentFaceID ] = tracker
-
-                        #Start a new thread that is used to simulate 
-                        #face recognition. This is not yet implemented in this
-                        #version :)
-                        t = threading.Thread( target = doRecognizePerson ,
-                                               args=(faceNames, currentFaceID))
-                        t.start()
-
-                        #Increase the currentFaceID counter
-                        currentFaceID += 1
-
-
-
-
+                            #if (len(shape) == 5):
+                            if True:
+                           
+                                found_face_id += 1
+                                print("Creating new tracker " + str(found_face_id))
+                            #Create and store the tracker 
+                                tracker = dlib.correlation_tracker()
+                                
+                                r = face_info()
+                                r.faceTracker = tracker
+                                r.ID = found_face_id
+                                Onscreen_Faces.append(r)
+                                Onscreen_Faces[-1].faceTracker.start_track(baseImage, dlib.rectangle(x-10,y-20,x+w+10,y+h+20))
+                                #cv2.imshow("ADD_TRACKER", baseImage[y:y+h,x:x+w])
             #Now loop over all the trackers we have and draw the rectangle
             #around the detected faces. If we 'know' the name for this person
             #(i.e. the recognition thread is finished), we print the name
             #of the person, otherwise the message indicating we are detecting
             #the name of the person
-            for fid in faceTrackers.keys():
-                tracked_position =  faceTrackers[fid].get_position()
+            for fid,Onscreen_Face in enumerate(Onscreen_Faces):
+                tracked_position =  Onscreen_Face.faceTracker.get_position()
 
                 t_x = int(tracked_position.left())
                 t_y = int(tracked_position.top())
                 t_w = int(tracked_position.width())
                 t_h = int(tracked_position.height())
 
-                cv2.rectangle(resultImage, (t_x, t_y),
-                                        (t_x + t_w , t_y + t_h),
-                                        rectangleColor ,2)
+                cv2.putText(resultImage, Onscreen_Face.name , 
+                            (int(t_x), int(t_y+t_h/2)), 
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.5, (0, 0, 255), 2,2)
+                cv2.rectangle(resultImage, (t_x,t_y),(t_x+t_w,t_y+t_h),(0,0,255))
+
+                if not Onscreen_Face.identified:
+                    
+                    starty = t_y
+                    endy = (t_y+t_h)
+                    startx = t_x
+                    endx = (t_x+t_w)
+
+                    rects, scores, idx = detector.run(baseImage[starty:endy,startx:endx], 0, 0)
+
+                    for rect in rects:
+                        Onscreen_Face.queuecount += 1 
+
+                        if scores[0] > Onscreen_Face.queuescoremax:
+
+                            Onscreen_Face.queuescoremax = scores[0]
+  
+                            (x,y,w,h) = face_utils.rect_to_bb(rect)
+                            if x<0:
+                                x=0
+                            if y<0:
+                                y=0
+                            top = starty+y
+                            bottom= top+h
+                            left= startx+x
+                            right = left + w
+
+                            Onscreen_Face.queuebestface = baseImage[top:bottom,left:right]
+                            # if showit:
+                            #     cv2.imshow(str(idx[-1]),Onscreen_Face.queuebestface)
+                            #     time.sleep(1)
+
+                            #cv2.imshow("NEW_BESTFACE", Onscreen_Face.queuebestface)
+                    if (Onscreen_Face.queuecount == face_pool_size):
+                        # cv2.imshow("BEST_FACE", Onscreen_Face.queuebestface)
+                        # cv2.waitKey(1)
+                        # time.sleep(1)
+                        if Onscreen_Face.queuescoremax > score_max_to_ID:
+                            # Found enough faces, send to Augmentation
+                            #cv2.imshow("SEND_TO_AUG", Onscreen_Face.queuebestface)
+
+                            face_to_encode = Onscreen_Face.queuebestface
+                            face_to_encode = cv2.resize(face_to_encode,(0,0),fx=2,fy=2)
+                            encoded_faces = face_recognition.face_encodings(face_to_encode)
 
 
-                if fid in faceNames.keys():
-                    cv2.putText(resultImage, faceNames[fid] , 
-                                (int(t_x + t_w/2), int(t_y)), 
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.5, (255, 255, 255), 2)
-                else:
-                    cv2.putText(resultImage, "Detecting..." , 
-                                (int(t_x + t_w/2), int(t_y)), 
-                                cv2.FONT_HERSHEY_SIMPLEX,
-                                0.5, (255, 255, 255), 2)
-
-
-
-
+                            for encoded_face in encoded_faces:
+                                print("attempting...'\n")
+                                if len(previously_found_encodings) > 0:
+                                    search_all = face_recognition.compare_faces(previously_found_encodings,encoded_face,0.4)
+                                    
+                                    if True in search_all:
+                                        first_match_index = search_all.index(True)
+                                        Onscreen_Face.name = previously_found_names[first_match_index]
+                                        Onscreen_Face.identified = True
+                                        print("Found " + Onscreen_Face.name + " from index " + str(first_match_index) + '\n')
+                                if not Onscreen_Face.identified:
+                                    prediction = face_rec2.predict(prefound_encodings=encoded_face,knn_clf=knn_clf,voters=5)
+                                    for name in prediction:
+                                    
+                                        Onscreen_Face.name = name
+                                        Onscreen_Face.identified = True
+                                        previously_found_encodings.append(encoded_face)
+                                        previously_found_names.append(Onscreen_Face.name)
+                                        print("Found " + Onscreen_Face.name + " from model.\n")
+                        Onscreen_Face.reset_queue()
 
 
             #Since we want to show something larger on the screen than the
@@ -268,20 +304,21 @@ def detectAndTrackMultipleFaces():
             #of the baseimage and make the result image a copy of this large
             #base image and use the scaling factor to draw the rectangle
             #at the right coordinates.
+
             largeResult = cv2.resize(resultImage,
                                      (OUTPUT_SIZE_WIDTH,OUTPUT_SIZE_HEIGHT))
 
             #Finally, we want to show the images on the screen
             #cv2.imshow("base-image", baseImage)
-            time_now = time.time()
-            elapsed = float(time_now-time_last)
-            while elapsed < spf:
+            #time_now = time.time()
+            #elapsed = float(time_now-time_last)
+            #while elapsed < spf:
  
-                time_now = time.time()
-                elapsed = float(time_now-time_last)
-            time_last = time_now
+            #    time_now = time.time()
+            #    elapsed = float(time_now-time_last)
+            #time_last = time_now
             cv2.imshow("result-image", largeResult)
-            cv2.waitKey(1)
+     
 
 
 
@@ -295,9 +332,11 @@ def detectAndTrackMultipleFaces():
     #Destroy any OpenCV windows and exit the application
     time_end_loop = time.time()
     print("Finished in " + str(time_end_loop - time_start_loop))
+    
     cv2.destroyAllWindows()
     exit(0)
 
 
 if __name__ == '__main__':
+
     detectAndTrackMultipleFaces()
