@@ -14,6 +14,7 @@ from imutils import face_utils
 from PIL import Image, ImageTk
 import tkinter
 import os
+import platform
 
 #Operation Variables
 score_min_to_track = -1
@@ -42,7 +43,11 @@ class face_info:
 
 class faceTracker:
     dir = os.getcwd()
-    classifier_model_path = dir + "\\knn\\trained_knn_model.txt"
+    arch = platform.architecture()
+    if arch[0] == '32bit':
+        classifier_model_path = dir + "\\knn\\trained_knn_model_32.txt"
+    else:
+        classifier_model_path = dir + "\\knn\\trained_knn_model_64.txt"
     landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.dat"
     faceCascade = cv2.CascadeClassifier(dir + '\\haarcascade_frontalface_default.xml')
     detector = dlib.get_frontal_face_detector()
