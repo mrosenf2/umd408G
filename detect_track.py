@@ -50,8 +50,8 @@ def detectAndTrackMultipleFaces():
 
 
 
-    classifier_model_path="C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/trained_knn_model.txt"
-    landmark_predictor_path = "C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/shape_predictor_5_face_landmarks.dat"
+    classifier_model_path="C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/knn/trained_knn_model.txt"
+    landmark_predictor_path = "C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/knn/shape_predictor_5_face_landmarks.dat"
     faceCascade = cv2.CascadeClassifier('C:/Users/Matthew/Anaconda3/Library/etc/haarcascades/haarcascade_frontalface_default.xml')
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(landmark_predictor_path)

@@ -13,6 +13,7 @@ import face_recognition
 from imutils import face_utils
 from PIL import Image, ImageTk
 import tkinter
+import os
 
 #Operation Variables
 score_min_to_track = -1
@@ -40,9 +41,10 @@ class face_info:
 
 
 class faceTracker:
-    classifier_model_path="C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/knn/trained_knn_model.txt"
-    landmark_predictor_path = "C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/knn/shape_predictor_5_face_landmarks.dat"
-    faceCascade = cv2.CascadeClassifier('C:/Users/Matthew/Anaconda3/Library/etc/haarcascades/haarcascade_frontalface_default.xml')
+    dir = os.getcwd()
+    classifier_model_path = dir + "\\knn\\trained_knn_model.txt"
+    landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.dat"
+    faceCascade = cv2.CascadeClassifier(dir + '\\haarcascade_frontalface_default.xml')
     detector = dlib.get_frontal_face_detector()
     # predictor = dlib.shape_predictor(landmark_predictor_path)
     #The deisred output width and height
