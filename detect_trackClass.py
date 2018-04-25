@@ -49,7 +49,7 @@ class faceTracker:
     else:
         classifier_model_path = dir + "\\knn\\trained_knn_model_64.txt"
     landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.dat"
-    faceCascade = cv2.CascadeClassifier(dir + '\\haarcascade_frontalface_default.xml')
+
     detector = dlib.get_frontal_face_detector()
     # predictor = dlib.shape_predictor(landmark_predictor_path)
     #The deisred output width and height
@@ -96,11 +96,7 @@ class faceTracker:
             baseImage = cv2.resize(fullSizeBaseImage,(890,500))
             gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
 
-            pressedKey = cv2.waitKey(1)
-            if pressedKey == ord('q'):
-                return
-            if pressedKey == ord('y'):
-                showit = not showit
+            
 
 
             resultImage = baseImage.copy()
@@ -146,12 +142,7 @@ class faceTracker:
             if (self.frameCounter % update_tracker) == 0:
 
                 rects, scores, idx = self.detector.run(gray, 0, 0)
-                #faces = faceCascade.detectMultiScale(gray, 1.3, 5)
-                # for (_x,_y,_w,_h) in faces:
-                #     x = int(_x)
-                #     y = int(_y)
-                #     w = int(_w)
-                #     h = int(_h)
+
                 for o, rect in enumerate(rects):
                     #if True:
                     if (scores[0] > score_min_to_track):
@@ -329,6 +320,7 @@ class faceTracker:
     #we have to check for the KeyboardInterrupt exception and break out of
     #the main loop
         except KeyboardInterrupt as e:
+            cv2.destroyAllWindows()
             pass
     #
     # #Destroy any OpenCV windows and exit the application
