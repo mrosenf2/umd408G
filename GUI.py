@@ -4,7 +4,7 @@ import face_rec2
 from threading import Thread
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
-import detect_trackClass
+# import detect_trackClass
 import cv2
 import os
 import socket
@@ -16,21 +16,27 @@ top = tkinter.Tk()
 top.title("Team Shaspasms")
 
 # setup client connection
-TCP_IP = '127.0.0.1'
+TCP_IP = '10.104.190.43'
+host, _, _ = socket.gethostbyaddr(TCP_IP)
 TCP_PORT = 5005
 BUFFER_SIZE = 1024
+# set up video
+
+
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((TCP_IP, TCP_PORT))
 
 def sendFrame(frm):
-    print('frame:',frm)
     # create frame as bytes
+    # print('sending frame')
     frm = pickle.dumps(frm)
     s.sendall(str(len(frm)).encode())
+    recv = s.recv(BUFFER_SIZE).decode()
+    # print('received:', recv)
     s.sendall(frm)
-    recv = s.recv(BUFFER_SIZE)
-    print("received data:", recv)
+    recv = s.recv(BUFFER_SIZE).decode()
+    # print('received:', recv)
 def closeconn():
     s.close()
 
@@ -49,19 +55,23 @@ def button_Go():
     dir = os.getcwd()
     vidPath = dir + "\\Clips\\gatesjobs.mp4"
     # vidPath = txt_fn.get("1.0", "end-0c")
-    tracker = detect_trackClass.faceTracker(vidPath)
+    # tracker = detect_trackClass.faceTracker(vidPath)
+    capture = cv2.VideoCapture(vidPath)
     try:
         while True:
-            frame = tracker.detectAndTrackMultipleFaces()
-            print((frame))
-            # cv2.imshow("Sent Frame", frame)
+            ret, frame = capture.read()
+            if not ret:
+                print('end of video')
+                break
+
             try:
                 sendFrame(frame)
+                # cv2.imshow("Sent Frame", frame)
+                # cv2.waitKey(0)
             except ConnectionAbortedError as e:
                 print("Cxn was terminated")
                 top.destroy()
-                break                        
-            input("press enter to continue")
+                break
     except KeyboardInterrupt as e:
         top.destroy()
         pass
