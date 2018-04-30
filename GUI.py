@@ -16,7 +16,8 @@ top = tkinter.Tk()
 top.title("Team Shaspasms")
 
 # setup client connection
-TCP_IP = '10.104.190.43'
+# TCP_IP = '10.104.190.43'
+TCP_IP = '127.0.0.1'
 host, _, _ = socket.gethostbyaddr(TCP_IP)
 TCP_PORT = 5005
 BUFFER_SIZE = 1024
@@ -29,14 +30,16 @@ s.connect((TCP_IP, TCP_PORT))
 
 def sendFrame(frm):
     # create frame as bytes
-    # print('sending frame')
     frm = pickle.dumps(frm)
+    # send frame length
     s.sendall(str(len(frm)).encode())
+    # wait for confirmation of frame lenght
     recv = s.recv(BUFFER_SIZE).decode()
-    # print('received:', recv)
+    # send frome
     s.sendall(frm)
+    # wait for confirmation of frame
     recv = s.recv(BUFFER_SIZE).decode()
-    # print('received:', recv)
+    
 def closeconn():
     s.close()
 
@@ -66,9 +69,7 @@ def button_Go():
 
             try:
                 sendFrame(frame)
-                # cv2.imshow("Sent Frame", frame)
-                # cv2.waitKey(0)
-            except ConnectionAbortedError as e:
+            except (ConnectionAbortedError, ConnectionResetError) as e:
                 print("Cxn was terminated")
                 top.destroy()
                 break

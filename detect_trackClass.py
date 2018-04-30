@@ -79,6 +79,7 @@ class faceTracker:
     def get_dimensions(self):
         return self.video_width, self.video_height
 
+    """method that will take a single frame as input and return a data structure containing information about tracked faces and locations"""
     def detectAndTrackMultipleFaces(self):
         fps = self.capture.get(cv2.CAP_PROP_FPS)
         spf = float(1/fps)
@@ -96,7 +97,7 @@ class faceTracker:
             baseImage = cv2.resize(fullSizeBaseImage,(890,500))
             gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
 
-            
+
 
 
             resultImage = baseImage.copy()
@@ -297,19 +298,7 @@ class faceTracker:
             largeResult = cv2.resize(resultImage,
                                      (self.OUTPUT_SIZE_WIDTH,self.OUTPUT_SIZE_HEIGHT))
 
-            #Finally, we want to show the images on the screen
-            # cv2.imshow("base-image", baseImage)
-            #time_now = time.time()
-            #elapsed = float(time_now-time_last)
-            #while elapsed < spf:
-
-            #    time_now = time.time()
-            #    elapsed = float(time_now-time_last)
-            #time_last = time_now
-            # cv2.imshow("result-image", largeResult)
             return largeResult
-            # tkimage = ImageTk.PhotoImage(largeResult)
-            # id = tkCanvas.create_image(0, 0, image=tkimage)
 
 
 
