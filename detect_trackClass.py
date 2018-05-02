@@ -49,7 +49,7 @@ class faceTracker:
     else:
         classifier_model_path = dir + "\\knn\\trained_knn_model_64.txt"
     landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.dat"
-    faceCascade = cv2.CascadeClassifier(dir + '\\haarcascade_frontalface_default.xml')
+
     detector = dlib.get_frontal_face_detector()
     # predictor = dlib.shape_predictor(landmark_predictor_path)
     #The deisred output width and height
@@ -79,6 +79,7 @@ class faceTracker:
     def get_dimensions(self):
         return self.video_width, self.video_height
 
+    """method that will take a single frame as input and return a data structure containing information about tracked faces and locations"""
     def detectAndTrackMultipleFaces(self):
         fps = self.capture.get(cv2.CAP_PROP_FPS)
         spf = float(1/fps)
@@ -96,11 +97,7 @@ class faceTracker:
             baseImage = cv2.resize(fullSizeBaseImage,(890,500))
             gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
 
-            pressedKey = cv2.waitKey(1)
-            if pressedKey == ord('q'):
-                return
-            if pressedKey == ord('y'):
-                showit = not showit
+
 
 
             resultImage = baseImage.copy()
@@ -146,12 +143,7 @@ class faceTracker:
             if (self.frameCounter % update_tracker) == 0:
 
                 rects, scores, idx = self.detector.run(gray, 0, 0)
-                #faces = faceCascade.detectMultiScale(gray, 1.3, 5)
-                # for (_x,_y,_w,_h) in faces:
-                #     x = int(_x)
-                #     y = int(_y)
-                #     w = int(_w)
-                #     h = int(_h)
+
                 for o, rect in enumerate(rects):
                     #if True:
                     if (scores[0] > score_min_to_track):
@@ -306,19 +298,7 @@ class faceTracker:
             largeResult = cv2.resize(resultImage,
                                      (self.OUTPUT_SIZE_WIDTH,self.OUTPUT_SIZE_HEIGHT))
 
-            #Finally, we want to show the images on the screen
-            # cv2.imshow("base-image", baseImage)
-            #time_now = time.time()
-            #elapsed = float(time_now-time_last)
-            #while elapsed < spf:
-
-            #    time_now = time.time()
-            #    elapsed = float(time_now-time_last)
-            #time_last = time_now
-            # cv2.imshow("result-image", largeResult)
             return largeResult
-            # tkimage = ImageTk.PhotoImage(largeResult)
-            # id = tkCanvas.create_image(0, 0, image=tkimage)
 
 
 
@@ -329,6 +309,7 @@ class faceTracker:
     #we have to check for the KeyboardInterrupt exception and break out of
     #the main loop
         except KeyboardInterrupt as e:
+            cv2.destroyAllWindows()
             pass
     #
     # #Destroy any OpenCV windows and exit the application

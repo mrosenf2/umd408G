@@ -13,6 +13,7 @@ import face_recognition
 from imutils import face_utils
 from PIL import Image, ImageTk
 import tkinter
+import os
 
 #Operation Variables
 score_min_to_track = -1
@@ -48,9 +49,8 @@ def detectAndTrackMultipleFaces():
     previously_found_names = []
     previously_found_encodings = []
 
-
-
-    classifier_model_path="C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/knn/trained_knn_model.txt"
+    dir = os.getcwd()
+    classifier_model_path = dir + "\\knn\\trained_knn_model_32.txt"
     landmark_predictor_path = "C:/Users/Matthew/Documents/SCHOOL/SuperSenior/ENEE408G/FinalProj/knn/shape_predictor_5_face_landmarks.dat"
     faceCascade = cv2.CascadeClassifier('C:/Users/Matthew/Anaconda3/Library/etc/haarcascades/haarcascade_frontalface_default.xml')
     detector = dlib.get_frontal_face_detector()
@@ -69,8 +69,7 @@ def detectAndTrackMultipleFaces():
     video_width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
     print ("This video is " + str(video_width) + 'x' + str(video_height))
     fps = capture.get(cv2.CAP_PROP_FPS)
-    spf = float(1/fps)
-
+    spf = float(1/fps)    
     cv2.namedWindow("base-image", cv2.WINDOW_AUTOSIZE)
     cv2.namedWindow("result-image", cv2.WINDOW_AUTOSIZE)
 
@@ -79,6 +78,7 @@ def detectAndTrackMultipleFaces():
     cv2.moveWindow("result-image",400,100)
 
     #Start the window thread for the two windows we are using
+
     cv2.startWindowThread()
 
     #The color of the rectangle we draw around the face
@@ -92,9 +92,12 @@ def detectAndTrackMultipleFaces():
     time_last = time_start_loop
     showit = False
     try:
+
         while True:
 
             rc, fullSizeBaseImage = capture.read()
+            print(type(fullSizeBaseImage))
+            break
 
             if not rc:
                 break
