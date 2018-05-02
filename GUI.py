@@ -98,6 +98,8 @@ def button_Go():
     # tracker = detect_trackClass.faceTracker(vidPath)
     capture = cv2.VideoCapture(vidPath)
     loop_on = False
+    cv2.namedWindow('video')
+    cv2.moveWindow("video", gui_width+gui_offset_x, gui_offset_y)
     try:
         while True:
             ret, frame = capture.read()
@@ -135,15 +137,15 @@ btn_go = tkinter.Button(top, image=photo, height=200, width=200,relief='raised',
 btn_go.grid(row=2, column=1)
 
 # END GUI DEFINITIONS
-frame = cv2.imread('best_tom.png')
+
 
 gui_width = 600
 gui_height = 400
 gui_offset_x = 100
 gui_offset_y = 100
 top.geometry(str(gui_width)+"x"+str(gui_height)+"+"+str(gui_offset_x)+"+"+str(gui_offset_y))
-cv2.imshow('video', frame)
-cv2.moveWindow("video", gui_width+gui_offset_x, gui_offset_y)
+#cv2.imshow('video', frame)
+
 
 
 top.mainloop()
