@@ -18,7 +18,6 @@ import threading
 top = tkinter.Tk()
 top.title("Team Shaspasms")
 
-<<<<<<< HEAD
 # setup client connection
 # TCP_IP = '10.104.190.43'
 TCP_IP = '127.0.0.1'
