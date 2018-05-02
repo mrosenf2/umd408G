@@ -18,7 +18,7 @@ import platform
 
 #Operation Variables
 score_min_to_track = -1
-score_max_to_ID = -0.5
+score_max_to_ID = 0.2
 scale_down_factor = 1
 face_pool_size = 5
 update_tracker = 10

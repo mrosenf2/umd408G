@@ -93,8 +93,8 @@ def button_SelectFile():
 
 def button_Go():
     dir = os.getcwd()
-    vidPath = dir + "\\Clips\\gatesjobs.mp4"
-    # vidPath = txt_fn.get("1.0", "end-0c")
+    #vidPath = dir + "\\Clips\\gatesjobs.mp4"
+    vidPath = txt_fn.get("1.0", "end-1c")
     # tracker = detect_trackClass.faceTracker(vidPath)
     capture = cv2.VideoCapture(vidPath)
     loop_on = False
