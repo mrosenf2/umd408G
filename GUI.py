@@ -1,10 +1,10 @@
 import time
-import tkinter
+import tkinter    
 import face_rec2
 from threading import Thread
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
-# import detect_trackClass
+import detect_trackClass
 import cv2
 import os
 import socket
@@ -15,39 +15,72 @@ import pickle
 top = tkinter.Tk()
 top.title("Team Shaspasms")
 
-# setup client connection
-# TCP_IP = '10.104.190.43'
-TCP_IP = '127.0.0.1'
-host, _, _ = socket.gethostbyaddr(TCP_IP)
-TCP_PORT = 5005
-BUFFER_SIZE = 1024
-# set up video
+# # setup client connection
+# # TCP_IP = '10.104.190.43'
+# TCP_IP = '127.0.0.1'
+# host, _, _ = socket.gethostbyaddr(TCP_IP)
+# TCP_PORT = 5005
+# BUFFER_SIZE = 1024
+# # set up video
 
 
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((TCP_IP, TCP_PORT))
+# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# s.connect((TCP_IP, TCP_PORT))
 
-def sendFrame(frm):
-    # create frame as bytes
-    frm = pickle.dumps(frm)
-    # send frame length
-    s.sendall(str(len(frm)).encode())
-    # wait for confirmation of frame lenght
-    recv = s.recv(BUFFER_SIZE).decode()
-    # send frome
-    s.sendall(frm)
-    # wait for confirmation of frame
-    recv = s.recv(BUFFER_SIZE).decode()
+# def sendFrame(frm):
+#     # create frame as bytes
+#     frm = pickle.dumps(frm)
+#     # send frame length
+#     s.sendall(str(len(frm)).encode())
+#     # wait for confirmation of frame lenght
+#     recv = s.recv(BUFFER_SIZE).decode()
+#     # send frome
+#     s.sendall(frm)
+#     # wait for confirmation of frame
+#     recv = s.recv(BUFFER_SIZE).decode()
     
-def closeconn():
-    s.close()
+# def closeconn():
+#     s.close()
 
 
 
 
 # button functions
 
+
+def button_Webcam():
+    cap = cv2.VideoCapture(0)
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
+
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        if ret==True:
+            out.write(frame)
+
+            cv2.imshow('frame',frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        else:
+            break
+
+    # Release everything if job is finished
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+    tracker = detect_trackClass.faceTracker('output.avi')
+    try:
+        while True:
+            frame = tracker.detectAndTrackMultipleFaces()
+            cv2.imshow("Result", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+    except KeyboardInterrupt as e:
+        pass
 
 def button_SelectFile():
     filename = askopenfilename()
@@ -56,25 +89,16 @@ def button_SelectFile():
 
 def button_Go():
     dir = os.getcwd()
-    vidPath = dir + "\\Clips\\gatesjobs.mp4"
-    # vidPath = txt_fn.get("1.0", "end-0c")
-    # tracker = detect_trackClass.faceTracker(vidPath)
-    capture = cv2.VideoCapture(vidPath)
+    #vidPath = dir + "\\Clips\\gatesjobs.mp4"
+    vidPath = txt_fn.get("1.0", "end-1c")
+    tracker = detect_trackClass.faceTracker(vidPath)    
     try:
         while True:
-            ret, frame = capture.read()
-            if not ret:
-                print('end of video')
-                break
-
-            try:
-                sendFrame(frame)
-            except (ConnectionAbortedError, ConnectionResetError) as e:
-                print("Cxn was terminated")
-                top.destroy()
+            frame = tracker.detectAndTrackMultipleFaces()
+            cv2.imshow("Result", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
     except KeyboardInterrupt as e:
-        top.destroy()
         pass
 
 
@@ -82,11 +106,16 @@ def button_Go():
 txt_fn = tkinter.Text(top, height=3, width=30)
 txt_fn.grid(row=0, column=0)
 
-# btn_sf = tkinter.Button(top, text="Choose...", command=button_SelectFile)
-# btn_sf.grid(row=0, column=1)
+btn_sf = tkinter.Button(top, text="Use Webcam", command=button_Webcam)
+btn_sf.grid(row=0, column=1)
 
-btn_go = tkinter.Button(top, text="Go", command=button_Go)
-btn_go.grid(row=0, column=2)
+upload=ImageTk.PhotoImage(file="upload.png")
+btn_sf = tkinter.Button(top, image=upload, height=200, width=200,relief='raised',bd=4, command=button_SelectFile)
+btn_sf.grid(row=2, column=0)
+
+photo=ImageTk.PhotoImage(file="go.png")
+btn_go = tkinter.Button(top, image=photo, height=200, width=200,relief='raised',bd=4, command=button_Go)
+btn_go.grid(row=2, column=1)
 
 # END GUI DEFINITIONS
 

@@ -47,7 +47,7 @@ class faceTracker:
     if arch[0] == '32bit':
         classifier_model_path = dir + "\\knn\\trained_knn_model_32.txt"
     else:
-        classifier_model_path = dir + "\\knn\\trained_knn_model_64.txt"
+        classifier_model_path = dir + "\\knn-classifiers\\trained_knn_model_faceonly.clf"
     landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.dat"
 
     detector = dlib.get_frontal_face_detector()
@@ -276,7 +276,7 @@ class faceTracker:
                                         Onscreen_Face.identified = True
                                         print("Found " + Onscreen_Face.name + " from index " + str(first_match_index) + '\n')
                                 if not Onscreen_Face.identified:
-                                    prediction = face_rec2.predict(prefound_encodings=encoded_face,knn_clf=self.knn_clf,voters=5)
+                                    prediction = face_rec2.predict(prefound_encodings=encoded_face,distance_threshold=.51,knn_clf=self.knn_clf,voters=5)
                                     for name in prediction:
 
                                         Onscreen_Face.name = name
