@@ -1,6 +1,7 @@
 import time
 import tkinter    
 import face_rec2
+
 from threading import Thread
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
@@ -10,12 +11,14 @@ import os
 import socket
 import pickle
 import numpy as np
+import threading
 
 # START GUI DEFINITIONS
 # main window
 top = tkinter.Tk()
 top.title("Team Shaspasms")
 
+<<<<<<< HEAD
 # setup client connection
 # TCP_IP = '10.104.190.43'
 TCP_IP = '127.0.0.1'
@@ -119,6 +122,7 @@ def button_Go():
                 break
     except KeyboardInterrupt as e:
         pass
+
 
 
 # widgets
