@@ -9,6 +9,7 @@ import cv2
 import os
 import socket
 import pickle
+import numpy as np
 
 # START GUI DEFINITIONS
 # main window
@@ -26,7 +27,7 @@ BUFFER_SIZE = 1024
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((TCP_IP, TCP_PORT))
+#s.connect((TCP_IP, TCP_PORT))
 
 def sendFrame(frm):
     # create frame as bytes
@@ -44,10 +45,7 @@ def closeconn():
     s.close()
 
 
-
-
 # button functions
-
 
 def button_SelectFile():
     filename = askopenfilename()
@@ -60,6 +58,7 @@ def button_Go():
     # vidPath = txt_fn.get("1.0", "end-0c")
     # tracker = detect_trackClass.faceTracker(vidPath)
     capture = cv2.VideoCapture(vidPath)
+    loop_on = False
     try:
         while True:
             ret, frame = capture.read()
@@ -68,7 +67,10 @@ def button_Go():
                 break
 
             try:
-                sendFrame(frame)
+                #sendFrame(frame)
+                #time.sleep(1.0/40)
+                cv2.imshow('video', frame)
+                cv2.waitKey(1)
             except (ConnectionAbortedError, ConnectionResetError) as e:
                 print("Cxn was terminated")
                 top.destroy()
@@ -89,7 +91,15 @@ btn_go = tkinter.Button(top, text="Go", command=button_Go)
 btn_go.grid(row=0, column=2)
 
 # END GUI DEFINITIONS
+frame = cv2.imread('best_tom.png')
 
+gui_width = 600
+gui_height = 400
+gui_offset_x = 100
+gui_offset_y = 100
+top.geometry(str(gui_width)+"x"+str(gui_height)+"+"+str(gui_offset_x)+"+"+str(gui_offset_y))
+cv2.imshow('video', frame)
+cv2.moveWindow("video", gui_width+gui_offset_x, gui_offset_y)
 
 
 top.mainloop()
