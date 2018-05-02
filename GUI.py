@@ -144,6 +144,10 @@ gui_height = 400
 gui_offset_x = 100
 gui_offset_y = 100
 top.geometry(str(gui_width)+"x"+str(gui_height)+"+"+str(gui_offset_x)+"+"+str(gui_offset_y))
+preview_image = cv2.imread('film_preview.png')
+cv2.imshow('video', preview_image)
+cv2.moveWindow("video", gui_width+gui_offset_x, gui_offset_y)
+cv2.resizeWindow('video', gui_width, gui_height)
 #cv2.imshow('video', frame)
 
 
