@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-import tkinter
-=======
 import time
-import tkinter    
+import tkinter
 import face_rec2
->>>>>>> gui
 from threading import Thread
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
@@ -20,38 +16,9 @@ import threading
 top = tkinter.Tk()
 top.title("Team Shaspasms")
 
-<<<<<<< HEAD
-=======
-# # setup client connection
-# # TCP_IP = '10.104.190.43'
-# TCP_IP = '127.0.0.1'
-# host, _, _ = socket.gethostbyaddr(TCP_IP)
-# TCP_PORT = 5005
-# BUFFER_SIZE = 1024
-# # set up video
+ip = '10.104.178.225'
+cxn = clientcxn(ip, 5005, 5006)
 
-
-
-# s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-# s.connect((TCP_IP, TCP_PORT))
-
-# def sendFrame(frm):
-#     # create frame as bytes
-#     frm = pickle.dumps(frm)
-#     # send frame length
-#     s.sendall(str(len(frm)).encode())
-#     # wait for confirmation of frame lenght
-#     recv = s.recv(BUFFER_SIZE).decode()
-#     # send frome
-#     s.sendall(frm)
-#     # wait for confirmation of frame
-#     recv = s.recv(BUFFER_SIZE).decode()
-    
-# def closeconn():
-#     s.close()
-
-
->>>>>>> gui
 
 
 # button functions
@@ -97,15 +64,9 @@ def button_SelectFile():
 
 def button_Go():
     dir = os.getcwd()
-<<<<<<< HEAD
-    vidPath = dir + "\\Clips\\gatesjobs.mp4"
-    # vidPath = txt_fn.get("1.0", "end-0c")
-    # tracker = detect_trackClass.faceTracker(vidPath)
-    capture = cv2.VideoCapture(vidPath)
-=======
     #vidPath = dir + "\\Clips\\gatesjobs.mp4"
     vidPath = txt_fn.get("1.0", "end-1c")
-    tracker = detect_trackClass.faceTracker(vidPath)    
+    tracker = detect_trackClass.faceTracker(vidPath)
     try:
         while True:
             frame = tracker.detectAndTrackMultipleFaces()
@@ -114,7 +75,6 @@ def button_Go():
                 break
     except KeyboardInterrupt as e:
         pass
->>>>>>> gui
 
 
 # widgets
