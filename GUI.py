@@ -55,6 +55,8 @@ def button_Webcam():
     # Define the codec and create VideoWriter object
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
+    cv2.namedWindow('frame')
+    cv2.moveWindow("frame", gui_width+gui_offset_x, gui_offset_y)
 
     while(cap.isOpened()):
         ret, frame = cap.read()
@@ -72,6 +74,8 @@ def button_Webcam():
     out.release()
     cv2.destroyAllWindows()
     tracker = detect_trackClass.faceTracker('output.avi')
+    cv2.namedWindow('Result')
+    cv2.moveWindow("Result", gui_width+gui_offset_x, gui_offset_y)
     try:
         while True:
             frame = tracker.detectAndTrackMultipleFaces()
