@@ -4,7 +4,7 @@ import face_rec2
 from threading import Thread
 from PIL import Image, ImageTk
 from tkinter.filedialog import askopenfilename
-import detect_trackClass
+# import detect_trackClass
 import cv2
 import os
 import socket
@@ -18,10 +18,10 @@ import client
 top = tkinter.Tk()
 top.title("Team Shaspasms")
 
-# ip = '10.104.178.225'
-ip = '127.0.0.1'
-#cxn = client.clientcxn(ip, 5005, 5006)
-cxn = None
+ip = '10.104.176.33'
+# ip = '127.0.0.1'
+cxn = client.clientcxn(ip, 5005, 5006)
+# cxn = None
 
 
 # button functions
@@ -52,7 +52,7 @@ def button_Webcam():
     cap.release()
     out.release()
     cv2.destroyAllWindows()
-    tracker = detect_trackClass.faceTracker('output.avi')
+    # tracker = detect_trackClass.faceTracker('output.avi')
     # Snap results window next to original location of GUI
     cv2.namedWindow('Result')
     cv2.moveWindow("Result", gui_width+gui_offset_x, gui_offset_y)
@@ -75,13 +75,9 @@ def button_Go():
     dir = os.getcwd()
     #vidPath = dir + "\\Clips\\gatesjobs.mp4"
     vidPath = txt_fn.get("1.0", "end-1c")
-    tracker = detect_trackClass.faceTracker(vidPath)
+    capture = cv2.VideoCapture(vidPath)
     try:
-        while True:
-            frame = tracker.detectAndTrackMultipleFaces()
-            cv2.imshow("Result", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+        cxn.run(capture)
     except KeyboardInterrupt as e:
         pass
 
@@ -89,15 +85,15 @@ def button_Go():
 def connect(cxn, lbl):
     cxn.createCxn()
     print('creating cxn')
-    while True:                
+    while True:
         if cxn.getStatus() == 0:
             lbl.set('Connecting...')
         elif cxn.getStatus() == 1:
             lbl.set('Connection Established')
-            return
+            time.sleep(2)
         else:
             lbl.set('Connection Failed')
-            return
+            time.sleep(2)
 # widgets
 txt_fn = tkinter.Text(top, height=3, width=30)
 txt_fn.grid(row=0, column=0)

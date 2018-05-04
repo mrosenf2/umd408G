@@ -59,7 +59,15 @@ class clientcxn:
         t.start()
 
     def run(self, capture):
-        pass
+        tgt1 = self.sendFramesCont
+        tgt2 = self.rcvData
+        tgt3 = self.play_frames
+        t1 = threading.Thread(target=tgt1, args=(capture,))
+        t2 = threading.Thread(target=tgt2)
+        t3 = threading.Thread(target=tgt3)
+        t1.start()
+        t2.start()
+        t3.start()
 
 
     def sendFrame(self, frm, sock):
@@ -93,10 +101,12 @@ class clientcxn:
                     frmSock.sendall('finito'.encode())
                     break
                 try:
-                    self.sendFrame(frame, self.frmSock)
+                    frame = cv2.resize(frame,(640,480))
                     self.frmIdx += 1
                     # self.frameQueue.append({"frame": frame, "idx": self.frmIdx})
                     self.frameQueue.append(frame)
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                    self.sendFrame(frame, self.frmSock)
                 except (ConnectionAbortedError, ConnectionResetError) as e:
                     print("Cxn was terminated")
                     break
