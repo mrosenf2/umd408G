@@ -11,15 +11,19 @@ import socket
 import pickle
 import threading
 import client
+import sys
 
 # START GUI DEFINITIONS
 # main window
 
 top = tkinter.Tk()
 top.title("Team Shaspasms")
+if len(sys.argv) == 2:
+    ip = sys.argv[1]
+else:
+    ip = '127.0.0.1'
 
-ip = '10.104.176.33'
-# ip = '127.0.0.1'
+print('using', ip)
 cxn = client.clientcxn(ip, 5005, 5006)
 # cxn = None
 
@@ -29,42 +33,45 @@ cxn = client.clientcxn(ip, 5005, 5006)
 
 def button_Webcam():
     cap = cv2.VideoCapture(0)
-
-    # Define the codec and create VideoWriter object
-    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-    out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
-
-    # Snap webcam next to original location of GUI
-    cv2.namedWindow('frame')
-    cv2.moveWindow("frame", gui_width+gui_offset_x, gui_offset_y)
-    while(cap.isOpened()):
-        ret, frame = cap.read()
-        if ret==True:
-            out.write(frame)
-
-            cv2.imshow('frame',frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        else:
-            break
-
-    # Release everything if job is finished
-    cap.release()
-    out.release()
-    cv2.destroyAllWindows()
-    # tracker = detect_trackClass.faceTracker('output.avi')
-    # Snap results window next to original location of GUI
-    cv2.namedWindow('Result')
-    cv2.moveWindow("Result", gui_width+gui_offset_x, gui_offset_y)
     try:
-        while True:
-            frame = tracker.detectAndTrackMultipleFaces()
-            cv2.imshow("Result", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-
+        cxn.run(capture)
     except KeyboardInterrupt as e:
         pass
+    # Define the codec and create VideoWriter object
+    # fourcc = cv2.VideoWriter_fourcc(*'XVID')
+    # out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
+    #
+    # # Snap webcam next to original location of GUI
+    # cv2.namedWindow('frame')
+    # cv2.moveWindow("frame", gui_width+gui_offset_x, gui_offset_y)
+    # while(cap.isOpened()):
+    #     ret, frame = cap.read()
+    #     if ret==True:
+    #         out.write(frame)
+    #
+    #         cv2.imshow('frame',frame)
+    #         if cv2.waitKey(1) & 0xFF == ord('q'):
+    #             break
+    #     else:
+    #         break
+    #
+    # # Release everything if job is finished
+    # cap.release()
+    # out.release()
+    # cv2.destroyAllWindows()
+    # # tracker = detect_trackClass.faceTracker('output.avi')
+    # # Snap results window next to original location of GUI
+    # cv2.namedWindow('Result')
+    # cv2.moveWindow("Result", gui_width+gui_offset_x, gui_offset_y)
+    # try:
+    #     while True:
+    #         frame = tracker.detectAndTrackMultipleFaces()
+    #         cv2.imshow("Result", frame)
+    #         if cv2.waitKey(1) & 0xFF == ord('q'):
+    #             break
+    #
+    # except KeyboardInterrupt as e:
+    #     pass
 
 def button_SelectFile():
     filename = askopenfilename()
