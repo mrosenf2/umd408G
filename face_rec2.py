@@ -150,6 +150,7 @@ def predict(X_img=None, knn_clf=None, model_path=None, distance_threshold=0.6,pr
         faces_encodings = [prefound_encodings]
     # Use the KNN model to find the best matches for the test face
     closest_distances = knn_clf.kneighbors(faces_encodings, n_neighbors=voters)
+    print(str(closest_distances) + '\n')
     are_matches = [closest_distances[0][i][0] <= distance_threshold for i in range(1)]
 
     # Predict classes and remove classifications that aren't within the threshold
