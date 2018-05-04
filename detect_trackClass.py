@@ -18,13 +18,14 @@ import platform
 
 #Operation Variables
 score_min_to_track = -1
-score_max_to_ID = -0.5
+score_max_to_ID = 0
 scale_down_factor = 1
 face_pool_size = 5
 update_tracker = 10
 tracking_strictness = 6
-
-
+distance_thresh = 0.5
+voters_number = 20
+tracking_cap = 1
 class face_info:
     def __init__(self):
         self.identified = False
@@ -34,6 +35,7 @@ class face_info:
         self.queuescoremax = -5
         self.queuebestface = 0
         self.ID = 0
+
     def reset_queue(self):
         self.queuebestface = 0
         self.queuescoremax = -5
@@ -45,62 +47,63 @@ class faceTracker:
     dir = os.getcwd()
     arch = platform.architecture()
     if arch[0] == '32bit':
-        classifier_model_path = dir + "\\knn\\trained_knn_model_32.txt"
+        classifier_model_path = dir + "\\knn\\trained_knn_model_32.clf"
     else:
-        classifier_model_path = dir + "\\knn-classifiers\\trained_knn_model_faceonly.clf"
-    landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.dat"
+        classifier_model_path = dir + "\\knn\\trained_knn_model_64.clf"
+    landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.ckn"
 
     detector = dlib.get_frontal_face_detector()
     # predictor = dlib.shape_predictor(landmark_predictor_path)
     #The deisred output width and height
-    OUTPUT_SIZE_WIDTH = 900
-    OUTPUT_SIZE_HEIGHT = 800
+
     with open(classifier_model_path, 'rb') as f:
         knn_clf = pickle.load(f)
     found_face_id = 0
     Onscreen_Faces = []
     #The color of the rectangle we draw around the face
-    rectangleColor = (0,165,255)
+
 
     #variables holding the current frame number and the current faceid
     frameCounter = 0
 
-    def __init__(self, videoPath):
+    def __init__(self):
         #Initialize a face cascade using the frontal face haar cascade provided with the OpenCV library
         #Make sure that you copy this file from the opencv project to the root of this project folder
         self.previously_found_names = []
         self.previously_found_encodings = []
-        self.videoPath = videoPath
-        self.capture = cv2.VideoCapture(self.videoPath)
-        self.video_height = self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
-        self.video_width = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH)
-        print ("This video is " + str(self.video_width) + 'x' + str(self.video_height))
+        #self.videoPath = videoPath
+        #self.capture = cv2.VideoCapture(self.videoPath)
+        #self.video_height = self.capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+        #self.video_width = self.capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+        #print ("This video is " + str(self.video_width) + 'x' + str(self.video_height))
 
     def get_dimensions(self):
         return self.video_width, self.video_height
 
     """method that will take a single frame as input and return a data structure containing information about tracked faces and locations"""
-    def detectAndTrackMultipleFaces(self):
-        fps = self.capture.get(cv2.CAP_PROP_FPS)
-        spf = float(1/fps)
+    def detectAndTrackMultipleFaces(self, baseImage):
+        #fps = self.capture.get(cv2.CAP_PROP_FPS)
+        #spf = float(1/fps)
 
         time_start_loop = time.time()
         time_last = time_start_loop
         showit = False
         try:
-            rc, fullSizeBaseImage = self.capture.read()
+            #rc, fullSizeBaseImage = self.capture.read()
+            #Server no longer needs to read from the file - it needs to read from the queue
 
-            if not rc:
-                return
-
-            baseImage = cv2.resize(fullSizeBaseImage, (0,0), fx=1/scale_down_factor, fy=1/scale_down_factor)
-            baseImage = cv2.resize(fullSizeBaseImage,(890,500))
-            gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
+            #if not rc:
+            #    return
 
 
+            #baseImage = cv2.resize(fullSizeBaseImage, (0,0), fx=1/scale_down_factor, fy=1/scale_down_factor)
+            
+            #gray = cv2.cvtColor(baseImage, cv2.COLOR_BGR2GRAY)
 
+            gray = baseImage.copy()
+            baseImage = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
 
-            resultImage = baseImage.copy()
+            #resultImage = baseImage.copy()
 
             #STEPS:
             # * Update all trackers and remove the ones that are not
@@ -129,7 +132,7 @@ class faceTracker:
                 if trackingQuality < tracking_strictness:
                     fidsToDelete.append( fid )
 
-            for fid in fidsToDelete:
+            for fid in reversed(fidsToDelete):
 
                 if (len(self.Onscreen_Faces)-1 >= fid):
                     print("Removing fid " + str(fid) + " from list of trackers")
@@ -138,7 +141,7 @@ class faceTracker:
                     print("Trying to delete index " + str(fid) + ', but length of Onscreen_Faces is only ' + str(len(self.Onscreen_Faces)) + '\n')
                     for fid,Onscreen_Face in enumerate(self.Onscreen_Faces):
                         print(str(fid) + ': ' + Onscreen_Face.name + '\n')
-                    time.sleep(10)
+                    
 
             if (self.frameCounter % update_tracker) == 0:
 
@@ -188,7 +191,7 @@ class faceTracker:
                             #shape = face_utils.shape_to_np(shape)
 
                             #if (len(shape) == 5):
-                            if True:
+                            if len(self.Onscreen_Faces) < tracking_cap:
 
                                 self.found_face_id += 1
                                 print("Creating new tracker " + str(self.found_face_id))
@@ -214,11 +217,11 @@ class faceTracker:
                 t_w = int(tracked_position.width())
                 t_h = int(tracked_position.height())
 
-                cv2.putText(resultImage, Onscreen_Face.name ,
-                            (int(t_x), int(t_y+t_h/2)),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5, (0, 0, 255), 2,2)
-                cv2.rectangle(resultImage, (t_x,t_y),(t_x+t_w,t_y+t_h),(0,0,255))
+                # cv2.putText(resultImage, Onscreen_Face.name ,
+                #             (int(t_x), int(t_y+t_h/2)),
+                #             cv2.FONT_HERSHEY_SIMPLEX,
+                #             0.5, (0, 0, 255), 2,2)
+                # cv2.rectangle(resultImage, (t_x,t_y),(t_x+t_w,t_y+t_h),(0,0,255))
 
                 if not Onscreen_Face.identified:
 
@@ -262,7 +265,7 @@ class faceTracker:
 
                             face_to_encode = Onscreen_Face.queuebestface
                             face_to_encode = cv2.resize(face_to_encode,(0,0),fx=2,fy=2)
-                            encoded_faces = face_recognition.face_encodings(face_to_encode)
+                            encoded_faces = face_recognition.face_encodings(face_to_encode,num_jitters=5)
 
 
                             for encoded_face in encoded_faces:
@@ -276,7 +279,7 @@ class faceTracker:
                                         Onscreen_Face.identified = True
                                         print("Found " + Onscreen_Face.name + " from index " + str(first_match_index) + '\n')
                                 if not Onscreen_Face.identified:
-                                    prediction = face_rec2.predict(prefound_encodings=encoded_face,distance_threshold=.51,knn_clf=self.knn_clf,voters=5)
+                                    prediction = face_rec2.predict(prefound_encodings=encoded_face,distance_threshold=distance_thresh,knn_clf=self.knn_clf,voters=voters_number)
                                     for name in prediction:
 
                                         Onscreen_Face.name = name
@@ -295,10 +298,21 @@ class faceTracker:
             #base image and use the scaling factor to draw the rectangle
             #at the right coordinates.
 
-            largeResult = cv2.resize(resultImage,
-                                     (self.OUTPUT_SIZE_WIDTH,self.OUTPUT_SIZE_HEIGHT))
+            #largeResult = cv2.resize(resultImage,
+             #                        (self.OUTPUT_SIZE_WIDTH,self.OUTPUT_SIZE_HEIGHT))
+            ret_names = []
+            for each in self.Onscreen_Faces:
+                ret_names.append(each.name)
 
-            return largeResult
+            ret_locations_tl = []
+            ret_locations_br = []
+            for each in self.Onscreen_Faces:
+                temp_loc = each.faceTracker.get_position()
+                loc_tuple_tl = (int(temp_loc.left()),int(temp_loc.top()))
+                loc_tuple_br= (int(temp_loc.right()),int(temp_loc.bottom()))
+                ret_locations_tl.append(loc_tuple_tl)
+                ret_locations_br.append(loc_tuple_br)
+            return len(self.Onscreen_Faces), ret_locations_tl, ret_locations_br, ret_names
 
 
 
@@ -321,3 +335,8 @@ class faceTracker:
 
 if __name__ == '__main__':
     detectAndTrackMultipleFaces()
+
+
+
+
+# number of rectangles,  rectangle locations, names
