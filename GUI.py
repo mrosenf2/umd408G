@@ -10,14 +10,17 @@ import os
 import socket
 import pickle
 import threading
+import client
 
 # START GUI DEFINITIONS
 # main window
+
 top = tkinter.Tk()
 top.title("Team Shaspasms")
 
-ip = '10.104.178.225'
-cxn = clientcxn(ip, 5005, 5006)
+# ip = '10.104.178.225'
+ip = '127.0.0.1'
+cxn = client.clientcxn(ip, 5005, 5006)
 
 
 
@@ -77,6 +80,18 @@ def button_Go():
         pass
 
 
+def connect(cxn, lbl):
+    cxn.createCxn()
+    print('creating cxn')
+    while True:                
+        if cxn.getStatus() == 0:
+            lbl.set('Connecting...')
+        elif cxn.getStatus() == 1:
+            lbl.set('Connection Established')
+            return
+        else:
+            lbl.set('Connection Failed')
+            return
 # widgets
 txt_fn = tkinter.Text(top, height=3, width=30)
 txt_fn.grid(row=0, column=0)
@@ -88,12 +103,24 @@ upload=ImageTk.PhotoImage(file="upload.png")
 btn_sf = tkinter.Button(top, image=upload, height=200, width=200,relief='raised',bd=4, command=button_SelectFile)
 btn_sf.grid(row=2, column=0)
 
+lbl_info = tkinter.StringVar()
+# lbl_info.set('Connecting...')
+tkinter.Label(top, textvariable=lbl_info).grid(row=3,column=0)
+
 photo=ImageTk.PhotoImage(file="go.png")
-btn_go = tkinter.Button(top, image=photo, height=200, width=200,relief='raised',bd=4, command=button_Go)
+btn_go = tkinter.Button(top, image=photo, height=200, width=200,relief='raised',bd=4, command= button_Go)
 btn_go.grid(row=2, column=1)
 
+lbl_info.set('Welcome')
+
+
+
 # END GUI DEFINITIONS
+tgt = connect
 
 
+# cxn.createCxn()
+t = threading.Thread(target=tgt, args=(cxn,lbl_info,))
+t.start()
 
 top.mainloop()

@@ -31,12 +31,36 @@ class clientcxn:
         self.frameQueue = deque() # list of all frames sent not yet played back
         self.dataQueue = deque()
         self.frmIdx = 0
-        print('Establishing frame connection...')
-        self.frmSock.connect((IP, port1))
-        print('Frame connection established')
-        print('Establishing data connection...')
-        self.dataSock.connect((IP, port2))
-        print('Data connection established')
+        self.__cxnstatus = 0 # disconnected
+
+
+
+    def getStatus(self):
+        return self.__cxnstatus
+
+    def __connect(self):
+        try:
+            print('Establishing frame connection...')
+            self.frmSock.connect((self.TCP_IP, self.TCP_PORT1))
+            print('Frame connection established')
+            print('Establishing data connection...')
+            self.dataSock.connect((self.TCP_IP, self.TCP_PORT2))
+            print('Data connection established')
+            self.__cxnstatus = 1 # connected
+            return True
+        except OSError as e:
+            print('Failed to establish connection')
+            self.__cxnstatus = -1 # error status
+            return False
+
+    def createCxn(self):
+        tgt = self.__connect
+        t = threading.Thread(target=tgt)
+        t.start()
+
+    def run(self, capture):
+        pass
+
 
     def sendFrame(self, frm, sock):
         """send length, wait for confirmation, send frame, wait for confirmation"""
@@ -125,17 +149,19 @@ class clientcxn:
 
 
 
-ip = '10.104.178.225'
-dir = os.getcwd()
-vidPath = dir + "\\Clips\\gatesjobs.mp4"
-capture = cv2.VideoCapture(vidPath)
-cxn = clientcxn(ip, 5005, 5006)
-tgt1 = cxn.sendFramesCont
-tgt2 = cxn.rcvData
-tgt3 = cxn.play_frames
-t1 = threading.Thread(target=tgt1, args=(capture,))
-t2 = threading.Thread(target=tgt2)
-t3 = threading.Thread(target=tgt3)
-t1.start()
-t2.start()
-t3.start()
+
+
+# ip = '10.104.178.225'
+# dir = os.getcwd()
+# vidPath = dir + "\\Clips\\gatesjobs.mp4"
+# capture = cv2.VideoCapture(vidPath)
+# cxn = clientcxn(ip, 5005, 5006)
+# tgt1 = cxn.sendFramesCont
+# tgt2 = cxn.rcvData
+# tgt3 = cxn.play_frames
+# t1 = threading.Thread(target=tgt1, args=(capture,))
+# t2 = threading.Thread(target=tgt2)
+# t3 = threading.Thread(target=tgt3)
+# t1.start()
+# t2.start()
+# t3.start()

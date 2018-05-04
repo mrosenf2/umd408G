@@ -29,10 +29,14 @@ def getFrame(conn):
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((TCP_IP, TCP_PORT))
+s2.bind((TCP_IP, TCP_PORT + 1))
 s.listen(1)
+s2.listen(1)
 print('attempting to connect')
 conn, addr = s.accept()
+conn2, addr2 = s2.accept()
 print('Connection address:', addr)
 repeat = True
 
