@@ -20,7 +20,6 @@ ip = '10.104.178.225'
 cxn = clientcxn(ip, 5005, 5006)
 
 
-
 # button functions
 
 
@@ -31,6 +30,9 @@ def button_Webcam():
     fourcc = cv2.VideoWriter_fourcc(*'XVID')
     out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
 
+    # Snap webcam next to original location of GUI
+    cv2.namedWindow('frame')
+    cv2.moveWindow("frame", gui_width+gui_offset_x, gui_offset_y)
     while(cap.isOpened()):
         ret, frame = cap.read()
         if ret==True:
@@ -47,6 +49,9 @@ def button_Webcam():
     out.release()
     cv2.destroyAllWindows()
     tracker = detect_trackClass.faceTracker('output.avi')
+    # Snap results window next to original location of GUI
+    cv2.namedWindow('Result')
+    cv2.moveWindow("Result", gui_width+gui_offset_x, gui_offset_y)
     try:
         while True:
             frame = tracker.detectAndTrackMultipleFaces()
@@ -92,6 +97,17 @@ photo=ImageTk.PhotoImage(file="go.png")
 btn_go = tkinter.Button(top, image=photo, height=200, width=200,relief='raised',bd=4, command=button_Go)
 btn_go.grid(row=2, column=1)
 
+
+# Set GUI position and results position
+gui_width = 600
+gui_height = 400
+gui_offset_x = 100
+gui_offset_y = 100
+top.geometry(str(gui_width)+"x"+str(gui_height)+"+"+str(gui_offset_x)+"+"+str(gui_offset_y))
+preview_image = cv2.imread('film_preview.png')
+cv2.imshow('video', preview_image)
+cv2.moveWindow("video", gui_width+gui_offset_x, gui_offset_y)
+cv2.resizeWindow('video', gui_width, gui_height)
 # END GUI DEFINITIONS
 
 
