@@ -95,18 +95,19 @@ class clientcxn:
         try:
             while True:
                 ret, frame = capture.read()
-                frame = cv2.resize(frame,(560,315))
                 if not ret:
                     print('end of video')
-                    frmSock.sendall('finito'.encode())
+                    self.frmSock.sendall('finito'.encode())
                     break
                 try:
-                    frame = cv2.resize(frame,(640,480))
                     self.frmIdx += 1
-                    # self.frameQueue.append({"frame": frame, "idx": self.frmIdx})
-                    self.frameQueue.append(frame)
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    self.sendFrame(frame, self.frmSock)
+                    frame = cv2.resize(frame,(640,480))
+                    self.frameQueue.append({"frame": frame, "idx": self.frmIdx})
+                    if self.frmIdx % 2 == 0:
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        self.sendFrame(frame, self.frmSock)
+                    
+                    
                 except (ConnectionAbortedError, ConnectionResetError) as e:
                     print("Cxn was terminated")
                     break
@@ -137,21 +138,37 @@ class clientcxn:
 
     def play_frames(self):
         """playback video"""
-        time.sleep(2)
+        frame_count = 1
         try:
             while True:
-                if (len(self.dataQueue) > 0 and len(self.frameQueue) > 0):
-                    frm = self.frameQueue.popleft()
-                    # fidx = frm["idx"]
-                    # frm = frm["frame"]
-                    data = self.dataQueue.popleft()
-                    didx = data.frame_number
-                    # if(didx != fidx):
-                    #     print('indexes do not match', fidx, didx)
+                cv2.waitKey(1)
+                if (len(self.frameQueue) > 0):
 
-                    image = prepare_frame(frm, data)
-                    cv2.imshow('frame', image)
-                    cv2.waitKey(1)
+                    if (frame_count % skip_rate == 0):
+                        #if this is true then we are on a frame that was sent to the server
+                        if len(self.dataQueue) > 0:
+
+                            frm = self.frameQueue.popleft()
+                            fidx = frm["idx"]
+                            frm = frm["frame"]
+                            #HI2
+                            data = self.dataQueue.popleft()
+                            didx = data.frame_number*skip_rate
+                            if(didx != fidx):
+                                print('indices do not match', fidx, didx)
+
+                            image = prepare_frame(frm, data)
+                            cv2.imshow('frame', image)
+                            frame_count += 1
+                        else:
+                            time.sleep(0.05)
+                    else:
+                        frame_count += 1
+                        frm = self.frameQueue.popleft()
+                        frm = frm["frame"]
+                        cv2.imshow('frame', frm)
+                else:
+                    time.sleep(0.1)
 
         except KeyboardInterrupt as e:
             return 0
