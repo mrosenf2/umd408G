@@ -11,7 +11,11 @@ import time
 
 BUFFER_SIZE = 1024
 
+#ip = '10.104.178.225'
+ip = '127.0.0.1'
 
+
+skip_rate = 2
 def prepare_frame(frm, data):
     for i in range(data.face_count):
         tl = data.locations_tl[i]
@@ -31,44 +35,12 @@ class clientcxn:
         self.frameQueue = deque() # list of all frames sent not yet played back
         self.dataQueue = deque()
         self.frmIdx = 0
-        self.__cxnstatus = 0 # disconnected
-
-
-
-    def getStatus(self):
-        return self.__cxnstatus
-
-    def __connect(self):
-        try:
-            print('Establishing frame connection...')
-            self.frmSock.connect((self.TCP_IP, self.TCP_PORT1))
-            print('Frame connection established')
-            print('Establishing data connection...')
-            self.dataSock.connect((self.TCP_IP, self.TCP_PORT2))
-            print('Data connection established')
-            self.__cxnstatus = 1 # connected
-            return True
-        except OSError as e:
-            print('Failed to establish connection')
-            self.__cxnstatus = -1 # error status
-            return False
-
-    def createCxn(self):
-        tgt = self.__connect
-        t = threading.Thread(target=tgt)
-        t.start()
-
-    def run(self, capture):
-        tgt1 = self.sendFramesCont
-        tgt2 = self.rcvData
-        tgt3 = self.play_frames
-        t1 = threading.Thread(target=tgt1, args=(capture,))
-        t2 = threading.Thread(target=tgt2)
-        t3 = threading.Thread(target=tgt3)
-        t1.start()
-        t2.start()
-        t3.start()
-
+        print('Establishing frame connection...')
+        self.frmSock.connect((IP, port1))
+        print('Frame connection established')
+        print('Establishing data connection...')
+        self.dataSock.connect((IP, port2))
+        print('Data connection established')
 
     def sendFrame(self, frm, sock):
         """send length, wait for confirmation, send frame, wait for confirmation"""
@@ -82,7 +54,7 @@ class clientcxn:
         sock.sendall(frm)
         # wait for confirmation of frame
         recv = sock.recv(BUFFER_SIZE).decode()
-
+        cv2.rotate
 
 
 
@@ -95,18 +67,19 @@ class clientcxn:
         try:
             while True:
                 ret, frame = capture.read()
-                frame = cv2.resize(frame,(560,315))
                 if not ret:
                     print('end of video')
-                    frmSock.sendall('finito'.encode())
+                    self.frmSock.sendall('finito'.encode())
                     break
                 try:
-                    frame = cv2.resize(frame,(640,480))
                     self.frmIdx += 1
-                    # self.frameQueue.append({"frame": frame, "idx": self.frmIdx})
-                    self.frameQueue.append(frame)
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-                    self.sendFrame(frame, self.frmSock)
+                    frame = cv2.resize(frame,(640,480))
+                    self.frameQueue.append({"frame": frame, "idx": self.frmIdx})
+                    if self.frmIdx % 2 == 0:
+                        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                        self.sendFrame(frame, self.frmSock)
+                    
+                    
                 except (ConnectionAbortedError, ConnectionResetError) as e:
                     print("Cxn was terminated")
                     break
@@ -137,21 +110,37 @@ class clientcxn:
 
     def play_frames(self):
         """playback video"""
-        time.sleep(2)
+        frame_count = 1
         try:
             while True:
-                if (len(self.dataQueue) > 0 and len(self.frameQueue) > 0):
-                    frm = self.frameQueue.popleft()
-                    # fidx = frm["idx"]
-                    # frm = frm["frame"]
-                    data = self.dataQueue.popleft()
-                    didx = data.frame_number
-                    # if(didx != fidx):
-                    #     print('indexes do not match', fidx, didx)
+                cv2.waitKey(1)
+                if (len(self.frameQueue) > 0):
 
-                    image = prepare_frame(frm, data)
-                    cv2.imshow('frame', image)
-                    cv2.waitKey(1)
+                    if (frame_count % skip_rate == 0):
+                        #if this is true then we are on a frame that was sent to the server
+                        if len(self.dataQueue) > 0:
+
+                            frm = self.frameQueue.popleft()
+                            fidx = frm["idx"]
+                            frm = frm["frame"]
+                            #HI2
+                            data = self.dataQueue.popleft()
+                            didx = data.frame_number*skip_rate
+                            if(didx != fidx):
+                                print('indices do not match', fidx, didx)
+
+                            image = prepare_frame(frm, data)
+                            cv2.imshow('frame', image)
+                            frame_count += 1
+                        else:
+                            time.sleep(0.05)
+                    else:
+                        frame_count += 1
+                        frm = self.frameQueue.popleft()
+                        frm = frm["frame"]
+                        cv2.imshow('frame', frm)
+                else:
+                    time.sleep(0.1)
 
         except KeyboardInterrupt as e:
             return 0
@@ -160,18 +149,17 @@ class clientcxn:
 
 
 
+#dir = os.getcwd()
+vidPath = "D:/School/Notes/408G/Final Project/Week1/Clips/gatesjobs.mp4"
 
-# ip = '10.104.178.225'
-# dir = os.getcwd()
-# vidPath = dir + "\\Clips\\gatesjobs.mp4"
-# capture = cv2.VideoCapture(vidPath)
-# cxn = clientcxn(ip, 5005, 5006)
-# tgt1 = cxn.sendFramesCont
-# tgt2 = cxn.rcvData
-# tgt3 = cxn.play_frames
-# t1 = threading.Thread(target=tgt1, args=(capture,))
-# t2 = threading.Thread(target=tgt2)
-# t3 = threading.Thread(target=tgt3)
-# t1.start()
-# t2.start()
-# t3.start()
+capture = cv2.VideoCapture(vidPath)
+cxn = clientcxn(ip, 5005, 5006)
+tgt1 = cxn.sendFramesCont
+tgt2 = cxn.rcvData
+tgt3 = cxn.play_frames
+t1 = threading.Thread(target=tgt1, args=(capture,))
+t2 = threading.Thread(target=tgt2)
+t3 = threading.Thread(target=tgt3)
+t1.start()
+t2.start()
+t3.start()
