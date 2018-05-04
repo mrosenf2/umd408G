@@ -76,7 +76,7 @@ def process_frames():
     data_socket.bind((TCP_IP, DATA_PORT))
     print('Listening on Data Socket\n')
     data_socket.listen(1)
-    
+
     data_conn, data_addr = data_socket.accept()
 
     print("Data Connected. address " + str(data_addr) + '\n')
