@@ -123,7 +123,7 @@ class clientcxn:
                             frm = self.frameQueue.popleft()
                             fidx = frm["idx"]
                             frm = frm["frame"]
-                            #HI
+                            #HI2
                             data = self.dataQueue.popleft()
                             didx = data.frame_number*skip_rate
                             if(didx != fidx):
