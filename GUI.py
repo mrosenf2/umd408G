@@ -97,28 +97,37 @@ def button_Go():
     dir = os.getcwd()
     #vidPath = dir + "\\Clips\\gatesjobs.mp4"
     vidPath = txt_fn.get("1.0", "end-1c")
-    # tracker = detect_trackClass.faceTracker(vidPath)
+    tracker = detect_trackClass.faceTracker(vidPath)
     capture = cv2.VideoCapture(vidPath)
     loop_on = False
     cv2.namedWindow('video')
     cv2.moveWindow("video", gui_width+gui_offset_x, gui_offset_y)
+    # try:
+    #     while True:
+    #         ret, frame = capture.read()
+    #         if not ret:
+    #             print('end of video')
+    #             break
+
+    #         try:
+    #             #sendFrame(frame)
+    #             #time.sleep(1.0/40)
+    #             cv2.imshow('video', frame)
+    #             cv2.waitKey(1)
+    #         except (ConnectionAbortedError, ConnectionResetError) as e:
+    #             print("Cxn was terminated")
+    #             top.destroy()
+
+    #             break
+    # except KeyboardInterrupt as e:
+    #     pass
     try:
         while True:
-            ret, frame = capture.read()
-            if not ret:
-                print('end of video')
+            frame = tracker.detectAndTrackMultipleFaces()
+            cv2.imshow("Result", frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
 
-            try:
-                #sendFrame(frame)
-                #time.sleep(1.0/40)
-                cv2.imshow('video', frame)
-                cv2.waitKey(1)
-            except (ConnectionAbortedError, ConnectionResetError) as e:
-                print("Cxn was terminated")
-                top.destroy()
-
-                break
     except KeyboardInterrupt as e:
         pass
 
