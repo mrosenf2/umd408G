@@ -32,9 +32,9 @@ cxn = client.clientcxn(ip, 5005, 5006)
 
 
 def button_Webcam():
-    cap = cv2.VideoCapture(0)
+    #ap = cv2.VideoCapture(0)
     try:
-        cxn.run(capture)
+        cxn.run(0)
     except KeyboardInterrupt as e:
         pass
     # Define the codec and create VideoWriter object
@@ -82,25 +82,25 @@ def button_Go():
     dir = os.getcwd()
     #vidPath = dir + "\\Clips\\gatesjobs.mp4"
     vidPath = txt_fn.get("1.0", "end-1c")
-    capture = cv2.VideoCapture(vidPath)
+    #capture = cv2.VideoCapture(vidPath)
     try:
-        cxn.run(capture)
+        cxn.run(vidPath)
     except KeyboardInterrupt as e:
         pass
 
 
-def connect(cxn, lbl):
+def connect(cxn):
     cxn.createCxn()
     print('creating cxn')
-    while True:
-        if cxn.getStatus() == 0:
-            lbl.set('Connecting...')
-        elif cxn.getStatus() == 1:
-            lbl.set('Connection Established')
-            time.sleep(2)
-        else:
-            lbl.set('Connection Failed')
-            time.sleep(2)
+    # while True:
+    #     if cxn.getStatus() == 0:
+    #         lbl.set('Connecting...')
+    #     elif cxn.getStatus() == 1:
+    #         lbl.set('Connection Established')
+    #         time.sleep(2)
+    #     else:
+    #         lbl.set('Connection Failed')
+    #         time.sleep(2)
 # widgets
 txt_fn = tkinter.Text(top, height=3, width=30)
 txt_fn.grid(row=0, column=0)
@@ -138,11 +138,11 @@ cv2.resizeWindow('video', gui_width, gui_height)
 lbl_info.set('Welcome')
 
 # END GUI DEFINITIONS
-tgt = connect
-
+#tgt = connect
+cxn.createCxn()
 
 # cxn.createCxn()
-t = threading.Thread(target=tgt, args=(cxn,lbl_info,))
-t.start()
+#t = threading.Thread(target=tgt, args=(cxn,lbl_info))
+#t.start()
 
 top.mainloop()

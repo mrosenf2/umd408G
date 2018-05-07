@@ -10,7 +10,7 @@ import detect_trackClass
 import data_packet
 from collections import deque
 
-#TCP_IP = '10.104.178.225'
+#TCP_IP = '10.104.176.33'
 TCP_IP = '127.0.0.1'
 FRAME_PORT = 5005
 DATA_PORT = 5006
@@ -76,7 +76,7 @@ def process_frames():
     data_socket.bind((TCP_IP, DATA_PORT))
     print('Listening on Data Socket\n')
     data_socket.listen(1)
-
+    
     data_conn, data_addr = data_socket.accept()
 
     print("Data Connected. address " + str(data_addr) + '\n')

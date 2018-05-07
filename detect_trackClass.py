@@ -15,17 +15,19 @@ from PIL import Image, ImageTk
 import tkinter
 import os
 import platform
+#import face_recognition_models
 
+#cnn_face_detector = dlib.cnn_face_detection_model_v1(cnn_face_detection_model)
 #Operation Variables
 score_min_to_track = -1
-score_max_to_ID = 0
+score_max_to_ID = -1
 scale_down_factor = 1
-face_pool_size = 5
-update_tracker = 10
+face_pool_size = 2
+update_tracker = 4
 tracking_strictness = 6
 distance_thresh = 0.5
-voters_number = 20
-tracking_cap = 1
+voters_number = 10
+tracking_cap = 2
 class face_info:
     def __init__(self):
         self.identified = False
@@ -35,6 +37,7 @@ class face_info:
         self.queuescoremax = -5
         self.queuebestface = 0
         self.ID = 0
+        self.frameCounter = 0
 
     def reset_queue(self):
         self.queuebestface = 0
@@ -49,7 +52,7 @@ class faceTracker:
     if arch[0] == '32bit':
         classifier_model_path = dir + "\\knn\\trained_knn_model_32.clf"
     else:
-        classifier_model_path = dir + "\\knn\\trained_knn_model_64.clf"
+        classifier_model_path = dir + "\\knn\\new_model.txt"
     landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.ckn"
 
     detector = dlib.get_frontal_face_detector()
@@ -146,7 +149,9 @@ class faceTracker:
             if (self.frameCounter % update_tracker) == 0:
 
                 rects, scores, idx = self.detector.run(gray, 0, 0)
-
+                #face_locations = face_recognition.face_locations(image, number_of_times_to_upsample=0, model="cnn")
+                #dets = cnn_face_detector()
+                tracker_list = []
                 for o, rect in enumerate(rects):
                     #if True:
                     if (scores[0] > score_min_to_track):
@@ -201,8 +206,20 @@ class faceTracker:
                                 r = face_info()
                                 r.faceTracker = tracker
                                 r.ID = self.found_face_id
+                                tracker_list.append(len(self.Onscreen_Faces))
                                 self.Onscreen_Faces.append(r)
                                 self.Onscreen_Faces[-1].faceTracker.start_track(baseImage, dlib.rectangle(x-10,y-20,x+w+10,y+h+20))
+
+                        else:
+                            tracker_list.append(matchedFid)
+
+                for u in range(len(self.Onscreen_Faces)-1,-1,-1):     
+                    if u not in tracker_list:
+                        print("No face found in tracker " + str(u) + "\n")
+                        self.Onscreen_Faces.pop(u)
+
+
+
                                 #cv2.imshow("ADD_TRACKER", baseImage[y:y+h,x:x+w])
             #Now loop over all the trackers we have and draw the rectangle
             #around the detected faces. If we 'know' the name for this person
@@ -279,6 +296,10 @@ class faceTracker:
                                         Onscreen_Face.identified = True
                                         print("Found " + Onscreen_Face.name + " from index " + str(first_match_index) + '\n')
                                 if not Onscreen_Face.identified:
+                                    print("Passing this face to recognition...\n")
+                                    # cv2.imshow("FACE_TO_REC",face_to_encode)
+                                    # cv2.waitKey(1)
+                                    # time.sleep(5)
                                     prediction = face_rec2.predict(prefound_encodings=encoded_face,distance_threshold=distance_thresh,knn_clf=self.knn_clf,voters=voters_number)
                                     for name in prediction:
 
