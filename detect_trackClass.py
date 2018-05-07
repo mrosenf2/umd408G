@@ -311,7 +311,7 @@ class faceTracker:
                                     # time.sleep(5)
                                     candidate = face_rec2.predict(prefound_encodings=encoded_face, distance_threshold=distance_thresh, knn_clf=self.knn_clf_2, voters=voters_number)
                                     for name in candidate:
-                                        if name == "inside"
+                                        if name == "inside":
                                             prediction = face_rec2.predict(prefound_encodings=encoded_face,distance_threshold=distance_thresh,knn_clf=self.knn_clf,voters=voters_number)
                                             for name in prediction:
 
@@ -320,7 +320,7 @@ class faceTracker:
                                                 self.previously_found_encodings.append(encoded_face)
                                                 self.previously_found_names.append(Onscreen_Face.name)
                                                 print("Found " + Onscreen_Face.name + " from model.\n")
-                                        else
+                                        else:
                                             Onscreen_Face.name = "Unknown"
                                             Onscreen_Face.identified = True
                                             self.previously_found_encodings.append(encoded_face)
