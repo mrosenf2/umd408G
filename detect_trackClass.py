@@ -53,6 +53,10 @@ class faceTracker:
         classifier_model_path = dir + "\\knn\\trained_knn_model_32.clf"
     else:
         classifier_model_path = dir + "\\knn\\new_model.txt"
+
+    classifier_model_path = dir + "\\knn-classifiers\\trained_knn_model_faceonly.clf"
+    classifier_2_model_path = dir + "\\knn-classifiers\\trained_knn_model_inside_dataset.clf"
+
     landmark_predictor_path = dir + "\\knn\\shape_predictor_5_face_landmarks.ckn"
 
     detector = dlib.get_frontal_face_detector()
@@ -61,8 +65,13 @@ class faceTracker:
 
     with open(classifier_model_path, 'rb') as f:
         knn_clf = pickle.load(f)
+    with open(classifier_2_model_path, 'rb') as f:
+        knn_clf_2 = pickle.load(f)
+
     found_face_id = 0
     Onscreen_Faces = []
+
+
     #The color of the rectangle we draw around the face
 
 
@@ -300,14 +309,26 @@ class faceTracker:
                                     # cv2.imshow("FACE_TO_REC",face_to_encode)
                                     # cv2.waitKey(1)
                                     # time.sleep(5)
-                                    prediction = face_rec2.predict(prefound_encodings=encoded_face,distance_threshold=distance_thresh,knn_clf=self.knn_clf,voters=voters_number)
-                                    for name in prediction:
+                                    candidate = face_rec2.predict(prefound_encodings=encoded_face, distance_threshold=distance_thresh, knn_clf=self.knn_clf_2, voters=voters_number)
+                                    for name in candidate:
+                                        if name == "inside"
+                                            prediction = face_rec2.predict(prefound_encodings=encoded_face,distance_threshold=distance_thresh,knn_clf=self.knn_clf,voters=voters_number)
+                                            for name in prediction:
 
-                                        Onscreen_Face.name = name
-                                        Onscreen_Face.identified = True
-                                        self.previously_found_encodings.append(encoded_face)
-                                        self.previously_found_names.append(Onscreen_Face.name)
-                                        print("Found " + Onscreen_Face.name + " from model.\n")
+                                                Onscreen_Face.name = name
+                                                Onscreen_Face.identified = True
+                                                self.previously_found_encodings.append(encoded_face)
+                                                self.previously_found_names.append(Onscreen_Face.name)
+                                                print("Found " + Onscreen_Face.name + " from model.\n")
+                                        else
+                                            Onscreen_Face.name = "Unknown"
+                                            Onscreen_Face.identified = True
+                                            self.previously_found_encodings.append(encoded_face)
+                                            self.previously_found_names.append(Onscreen_Face.name)
+                                            print("Found " + Onscreen_Face.name + " from model.\n")
+
+
+                                    
                         Onscreen_Face.reset_queue()
 
 
