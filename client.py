@@ -10,7 +10,7 @@ import data_packet
 import time
 
 BUFFER_SIZE = 1024
-
+skip_rate = 2
 
 def prepare_frame(frm, data):
     for i in range(data.face_count):
@@ -54,15 +54,29 @@ class clientcxn:
             return False
 
     def createCxn(self):
-        tgt = self.__connect
-        t = threading.Thread(target=tgt)
-        t.start()
+        # tgt = self.__connect
+        # t = threading.Thread(target=tgt)
+        # t.start()
+        try:
+            print('Establishing frame connection...')
+            self.frmSock.connect((self.TCP_IP, self.TCP_PORT1))
+            print('Frame connection established')
+            print('Establishing data connection...')
+            self.dataSock.connect((self.TCP_IP, self.TCP_PORT2))
+            print('Data connection established')
+            self.__cxnstatus = 1 # connected
+            return True
+        except OSError as e:
+            print('Failed to establish connection')
+            self.__cxnstatus = -1 # error status
+            return False     
 
-    def run(self, capture):
+    def run(self, video_path):
+
         tgt1 = self.sendFramesCont
         tgt2 = self.rcvData
         tgt3 = self.play_frames
-        t1 = threading.Thread(target=tgt1, args=(capture,))
+        t1 = threading.Thread(target=tgt1, args=(video_path,))
         t2 = threading.Thread(target=tgt2)
         t3 = threading.Thread(target=tgt3)
         t1.start()
@@ -90,7 +104,10 @@ class clientcxn:
         self.frmSock.close
         self.dataSock.close
 
-    def sendFramesCont(self, capture):
+    def sendFramesCont(self, video_path):
+        capture = cv2.VideoCapture(video_path)
+        if video_path == 0:
+            time.sleep(2)
         """continuously sends frames to server from given videocapture arg"""
         try:
             while True:
@@ -103,7 +120,7 @@ class clientcxn:
                     self.frmIdx += 1
                     frame = cv2.resize(frame,(640,480))
                     self.frameQueue.append({"frame": frame, "idx": self.frmIdx})
-                    if self.frmIdx % 2 == 0:
+                    if self.frmIdx % skip_rate == 0:
                         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                         self.sendFrame(frame, self.frmSock)
                     
@@ -138,10 +155,15 @@ class clientcxn:
 
     def play_frames(self):
         """playback video"""
+
         frame_count = 1
+        previous_rectangle = False
+        previous_rectangle_tl = (0,0)
+        previous_rectangle_br = (0,0)
+        previous_name = 'none'
         try:
             while True:
-                cv2.waitKey(1)
+
                 if (len(self.frameQueue) > 0):
 
                     if (frame_count % skip_rate == 0):
@@ -157,8 +179,20 @@ class clientcxn:
                             if(didx != fidx):
                                 print('indices do not match', fidx, didx)
 
-                            image = prepare_frame(frm, data)
-                            cv2.imshow('frame', image)
+                            if data.face_count == 0:
+                                    previous_rectangle = False
+                            for i in range(0,data.face_count):
+                                tl = data.locations_tl[i]
+                                br = data.locations_br[i]
+                                name = data.names[i]
+                                cv2.putText(frm, name, (int(tl[0]), int(tl[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2,2)
+                                cv2.rectangle(frm, tl,br,(0,0,255))
+                                previous_rectangle = True
+                                previous_rectangle_tl = tl
+                                previous_rectangle_br = br
+                                previous_name = name
+
+                            cv2.imshow('video', frm)
                             frame_count += 1
                         else:
                             time.sleep(0.05)
@@ -166,7 +200,11 @@ class clientcxn:
                         frame_count += 1
                         frm = self.frameQueue.popleft()
                         frm = frm["frame"]
-                        cv2.imshow('frame', frm)
+                        if previous_rectangle:
+                            cv2.rectangle(frm,previous_rectangle_tl,previous_rectangle_br,(0,0,255))
+                            cv2.putText(frm, previous_name, (int(tl[0]), int(tl[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2,2)
+                        cv2.imshow('video', frm)
+                        cv2.waitKey(1)
                 else:
                     time.sleep(0.1)
 
