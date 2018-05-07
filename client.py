@@ -158,9 +158,9 @@ class clientcxn:
 
         frame_count = 1
         previous_rectangle = False
-        previous_rectangle_tl = (0,0)
-        previous_rectangle_br = (0,0)
-        previous_name = 'none'
+        previous_rectangle_tl = []
+        previous_rectangle_br = []
+        previous_name = []
         try:
             while True:
 
@@ -168,6 +168,10 @@ class clientcxn:
 
                     if (frame_count % skip_rate == 0):
                         #if this is true then we are on a frame that was sent to the server
+                        previous_rectangle = False
+                        previous_rectangle_tl.clear()
+                        previous_rectangle_br.clear()
+                        previous_name.clear()
                         if len(self.dataQueue) > 0:
 
                             frm = self.frameQueue.popleft()
@@ -179,8 +183,8 @@ class clientcxn:
                             if(didx != fidx):
                                 print('indices do not match', fidx, didx)
 
-                            if data.face_count == 0:
-                                    previous_rectangle = False
+
+                                    
                             for i in range(0,data.face_count):
                                 tl = data.locations_tl[i]
                                 br = data.locations_br[i]
@@ -188,9 +192,9 @@ class clientcxn:
                                 cv2.putText(frm, name, (int(tl[0]), int(tl[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2,2)
                                 cv2.rectangle(frm, tl,br,(0,0,255))
                                 previous_rectangle = True
-                                previous_rectangle_tl = tl
-                                previous_rectangle_br = br
-                                previous_name = name
+                                previous_rectangle_tl.append(tl)
+                                previous_rectangle_br.append(br)
+                                previous_name.append(name)
 
                             cv2.imshow('video', frm)
                             frame_count += 1
@@ -201,8 +205,10 @@ class clientcxn:
                         frm = self.frameQueue.popleft()
                         frm = frm["frame"]
                         if previous_rectangle:
-                            cv2.rectangle(frm,previous_rectangle_tl,previous_rectangle_br,(0,0,255))
-                            cv2.putText(frm, previous_name, (int(tl[0]), int(tl[1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2,2)
+                            for i,each in enumerate(previous_name):
+                                #print ("adding " + str(i) + "\n")
+                                cv2.rectangle(frm,previous_rectangle_tl[i],previous_rectangle_br[i],(0,0,255))
+                                cv2.putText(frm, each, (int(previous_rectangle_tl[i][0]), int(previous_rectangle_tl[i][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2,2)
                         cv2.imshow('video', frm)
                         cv2.waitKey(1)
                 else:
