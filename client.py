@@ -69,7 +69,7 @@ class clientcxn:
         except OSError as e:
             print('Failed to establish connection')
             self.__cxnstatus = -1 # error status
-            return False
+            return False     
 
     def run(self, video_path):
 
@@ -109,7 +109,6 @@ class clientcxn:
         if video_path == 0:
             time.sleep(2)
         """continuously sends frames to server from given videocapture arg"""
-
         try:
             while True:
                 ret, frame = capture.read()
@@ -119,13 +118,13 @@ class clientcxn:
                     break
                 try:
                     self.frmIdx += 1
-                    frame = cv2.resize(frame,(640,480))
+                    frame = cv2.resize(frame,(800,450))
                     self.frameQueue.append({"frame": frame, "idx": self.frmIdx})
                     if self.frmIdx % skip_rate == 0:
                         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                         self.sendFrame(frame, self.frmSock)
-
-
+                    
+                    
                 except (ConnectionAbortedError, ConnectionResetError) as e:
                     print("Cxn was terminated")
                     break
@@ -211,8 +210,7 @@ class clientcxn:
                                 cv2.rectangle(frm,previous_rectangle_tl[i],previous_rectangle_br[i],(0,0,255))
                                 cv2.putText(frm, each, (int(previous_rectangle_tl[i][0]), int(previous_rectangle_tl[i][1])), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2,2)
                         cv2.imshow('video', frm)
-                        if cv2.waitKey(1) & 0xFF == ord('q'):
-                            break
+                        cv2.waitKey(1)
                 else:
                     time.sleep(0.1)
 

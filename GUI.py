@@ -34,44 +34,39 @@ cxn = client.clientcxn(ip, 5005, 5006)
 def button_Webcam():
     #ap = cv2.VideoCapture(0)
     try:
-        cxn.run(0)
+       cxn.run(0)
     except KeyboardInterrupt as e:
         pass
-    # Define the codec and create VideoWriter object
+    # Define the codec and create VideoWriter objecst
     # fourcc = cv2.VideoWriter_fourcc(*'XVID')
     # out = cv2.VideoWriter('output.avi',fourcc, 20.0, (640,480))
-    #
+    
     # # Snap webcam next to original location of GUI
     # cv2.namedWindow('frame')
     # cv2.moveWindow("frame", gui_width+gui_offset_x, gui_offset_y)
+    # cap = cv2.VideoCapture(0)
+    # time.sleep(2)
     # while(cap.isOpened()):
     #     ret, frame = cap.read()
     #     if ret==True:
     #         out.write(frame)
-    #
+    
     #         cv2.imshow('frame',frame)
     #         if cv2.waitKey(1) & 0xFF == ord('q'):
     #             break
     #     else:
     #         break
-    #
+    
     # # Release everything if job is finished
     # cap.release()
     # out.release()
     # cv2.destroyAllWindows()
     # # tracker = detect_trackClass.faceTracker('output.avi')
     # # Snap results window next to original location of GUI
-    # cv2.namedWindow('Result')
-    # cv2.moveWindow("Result", gui_width+gui_offset_x, gui_offset_y)
-    # try:
-    #     while True:
-    #         frame = tracker.detectAndTrackMultipleFaces()
-    #         cv2.imshow("Result", frame)
-    #         if cv2.waitKey(1) & 0xFF == ord('q'):
-    #             break
-    #
-    # except KeyboardInterrupt as e:
-    #     pass
+
+    # cxn.run('output.avi')
+
+
 
 def button_SelectFile():
     filename = askopenfilename()

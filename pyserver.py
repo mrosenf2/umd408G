@@ -11,7 +11,7 @@ import data_packet
 from collections import deque
 
 #TCP_IP = '10.104.176.33'
-TCP_IP = '127.0.0.1'
+#TCP_IP = '127.0.0.1'
 FRAME_PORT = 5005
 DATA_PORT = 5006
 BUFFER_SIZE = 1024  # Normally 1024, but we want fast response
@@ -22,7 +22,10 @@ timeout_duration = 4
 sleep_duration = 0.1
 
 number_of_waits = timeout_duration / sleep_duration
-
+if len(sys.argv) == 2:
+    TCP_IP = sys.argv[1]
+else:
+    TCP_IP = '127.0.0.1'
         # packet_dict["frame_number"]=str(frame_number)
         # packet_dict["face_count"]=str(num_faces)
         # packet_dict["locations_tl"]=str(locations_tl)
